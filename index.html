@@ -124,6 +124,7 @@ function dragstarted(event, d) {
   if (!event.active) simulation.alphaTarget(0.3).restart();
   d.fx = d.x;
   d.fy = d.y;
+  d3.select(this).attr("stroke", "#000").attr("stroke-width", 2);
 }
 
 function dragged(event, d) {
@@ -133,8 +134,7 @@ function dragged(event, d) {
 
 function dragended(event, d) {
   if (!event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
+  d3.select(this).attr("stroke", null);
 }
 
 function showTooltip(event, d) {
@@ -179,18 +179,26 @@ d3.json("data.json").then(data => {
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", d => d.type === "cross_level" ? "5,5" : "none");
 
-  const node = g.append("g")
-    .selectAll("circle")
-    .data(data.nodes)
-    .enter().append("circle")
-    .attr("r", d => 10 + d.indegree + d.outdegree)
-    .attr("fill", d => nodeColors(d.level))
-    .call(d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended))
-    .on("mouseover", showTooltip)
-    .on("mouseout", hideTooltip);
+    const node = g.append("g")
+  .selectAll("circle")
+  .data(data.nodes)
+  .enter().append("circle")
+  .attr("r", d => 10 + d.indegree + d.outdegree)
+  .attr("fill", d => nodeColors(d.level))
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended))
+  .on("mouseover", showTooltip)
+  .on("mouseout", hideTooltip);
+
+  function resetNodePositions() {
+  node.each(d => {
+    d.fx = null;
+    d.fy = null;
+  });
+  simulation.alpha(1).restart();
+}
 
   const label = g.append("g")
     .selectAll("text")
@@ -200,6 +208,15 @@ d3.json("data.json").then(data => {
     .attr("font-size", 12)
     .attr("dx", 15)
     .attr("dy", 4);
+
+    function resetNodePositions() {
+  node.each(d => {
+    d.fx = null;
+    d.fy = null;
+  });
+  simulation.alpha(1).restart();
+}
+
 
   simulation.on("tick", () => {
     link
