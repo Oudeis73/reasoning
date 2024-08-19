@@ -209,6 +209,11 @@ d3.json("data.json").then(data => {
     .attr("dx", 15)
     .attr("dy", 4);
 
+    function resetNodePositions() {
+  node.each(d => {
+    d.fx = null;
+    d.fy = null;
+  });
   simulation.alpha(1).restart();
 }
 
