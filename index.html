@@ -32,6 +32,85 @@
     
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
+      // Aggiungi queste definizioni di colore all'inizio del tuo script
+const linkColors = {
+  same_level: "#999",
+  contains: "#1a9850",
+  cross_level: "#d73027"
+};
+
+const nodeColors = d3.scaleOrdinal(d3.schemeCategory10);
+
+// Modifica la creazione dei collegamenti
+const link = g.append("g")
+  .selectAll("line")
+  .data(data.links)
+  .enter().append("line")
+  .attr("stroke", d => linkColors[d.type])
+  .attr("stroke-opacity", 0.6)
+  .attr("stroke-width", 2)
+  .attr("stroke-dasharray", d => d.type === "cross_level" ? "5,5" : "none");
+
+// Modifica la creazione dei nodi
+const node = g.append("g")
+  .selectAll("circle")
+  .data(data.nodes)
+  .enter().append("circle")
+  .attr("r", 10)
+  .attr("fill", d => nodeColors(d.level))
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended))
+  .on("mouseover", showTooltip)
+  .on("mouseout", hideTooltip);
+
+// Modifica la forza di posizionamento verticale
+simulation.force("y", d3.forceY().strength(0.3).y(d => (d.level - 1) * height / 3));
+
+// Aggiungi una legenda
+const legend = svg.append("g")
+  .attr("class", "legend")
+  .attr("transform", "translate(20,20)");
+
+// Legenda per i livelli
+const levelLegend = legend.append("g").attr("transform", "translate(0,0)");
+levelLegend.selectAll("rect")
+  .data([1, 2, 3])
+  .enter().append("rect")
+  .attr("x", 0)
+  .attr("y", (d, i) => i * 25)
+  .attr("width", 20)
+  .attr("height", 20)
+  .attr("fill", d => nodeColors(d));
+
+levelLegend.selectAll("text")
+  .data([1, 2, 3])
+  .enter().append("text")
+  .attr("x", 30)
+  .attr("y", (d, i) => i * 25 + 15)
+  .text(d => `Livello ${d}`);
+
+// Legenda per i tipi di collegamenti
+const linkLegend = legend.append("g").attr("transform", "translate(120,0)");
+linkLegend.selectAll("line")
+  .data(Object.entries(linkColors))
+  .enter().append("line")
+  .attr("x1", 0)
+  .attr("y1", (d, i) => i * 25 + 10)
+  .attr("x2", 40)
+  .attr("y2", (d, i) => i * 25 + 10)
+  .attr("stroke", d => d[1])
+  .attr("stroke-width", 2)
+  .attr("stroke-dasharray", d => d[0] === "cross_level" ? "5,5" : "none");
+
+linkLegend.selectAll("text")
+  .data(Object.entries(linkColors))
+  .enter().append("text")
+  .attr("x", 50)
+  .attr("y", (d, i) => i * 25 + 15)
+  .text(d => d[0].replace("_", " "));
+  
         // Dimensioni del grafo
         const width = window.innerWidth;
         const height = window.innerHeight;
