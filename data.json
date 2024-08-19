@@ -1,0 +1,21 @@
+{
+    "nodes": [
+      {"id": "A1", "name": "Concetto A1", "level": 1},
+      {"id": "B1", "name": "Concetto B1", "level": 1},
+      {"id": "A2", "name": "Concetto A2", "level": 2},
+      {"id": "B2", "name": "Concetto B2", "level": 2},
+      {"id": "C2", "name": "Concetto C2", "level": 2},
+      {"id": "A3", "name": "Concetto A3", "level": 3},
+      {"id": "B3", "name": "Concetto B3", "level": 3}
+    ],
+    "links": [
+      {"source": "A1", "target": "B1", "type": "same_level"},
+      {"source": "A1", "target": "A2", "type": "contains"},
+      {"source": "B1", "target": "B2", "type": "contains"},
+      {"source": "B1", "target": "C2", "type": "contains"},
+      {"source": "A2", "target": "B2", "type": "same_level"},
+      {"source": "A2", "target": "A3", "type": "contains"},
+      {"source": "B2", "target": "B3", "type": "contains"},
+      {"source": "A1", "target": "B3", "type": "cross_level"}
+    ]
+  }
