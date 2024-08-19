@@ -26,8 +26,15 @@
         max-width: 300px;
         z-index: 10; /* Assicura che il tooltip sia sopra gli altri elementi */
     }
+
+    #controls-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 </style>
-        }
+      
     </style>
 </head>
 <body>
@@ -199,6 +206,22 @@ d3.json("data.json").then(data => {
   });
   simulation.alpha(1).restart();
 }
+// Crea un contenitore per i controlli
+const controlsContainer = d3.select("body")
+  .append("div")
+  .attr("id", "controls-container")
+  .style("position", "absolute")
+  .style("top", "10px")
+  .style("left", "10px")
+  .style("z-index", "1000");
+
+// Aggiungi il pulsante per resettare le posizioni dei nodi
+const resetButton = controlsContainer.append("button")
+  .text("Resetta posizioni")
+  .style("padding", "5px 10px")
+  .style("font-size", "14px")
+  .style("cursor", "pointer")
+  .on("click", resetNodePositions);
 
   const label = g.append("g")
     .selectAll("text")
