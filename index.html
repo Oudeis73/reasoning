@@ -199,11 +199,6 @@ d3.json("data.json").then(data => {
   .on("mouseover", showTooltip)
   .on("mouseout", hideTooltip);
 
-  function resetNodePositions() {
-  node.each(d => {
-    d.fx = null;
-    d.fy = null;
-  });
   simulation.alpha(1).restart();
 }
 // Crea un contenitore per i controlli
