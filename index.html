@@ -33,8 +33,6 @@
     </div>
     
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/@hpcc-js/wasm@1.20.0/dist/index.min.js"></script>
-    <script src="https://unpkg.com/d3-graphviz@5.0.2/build/d3-graphviz.js"></script>
     <script>
         // Dimensioni del grafo
         const width = 800;
@@ -81,18 +79,6 @@
           });
         }
 
-        async function calculateBetweenness(nodes, links) {
-          const graph = new d3.graphviz.graphlib.Graph();
-          nodes.forEach(node => graph.setNode(node.id));
-          links.forEach(link => graph.setEdge(link.source.id || link.source, link.target.id || link.target));
-
-          const betweenness = await d3.graphviz.betweennessCentrality(graph);
-          
-          nodes.forEach(node => {
-            node.betweenness = betweenness[node.id] || 0;
-          });
-        }
-
         function calculatePageRank(nodes, links, iterations = 10, dampingFactor = 0.85) {
           const N = nodes.length;
           let pageRank = {};
@@ -124,12 +110,9 @@
         }
 
         // Carica i dati dal file JSON
-        d3.json("data.json").then(async data => {
+        d3.json("data.json").then(data => {
           // Calcola indegree e outdegree
           calculateDegrees(data.nodes, data.links);
-
-          // Calcola betweenness centrality
-          await calculateBetweenness(data.nodes, data.links);
 
           // Calcola PageRank
           calculatePageRank(data.nodes, data.links);
@@ -168,7 +151,6 @@
                             Livello: ${d.level}<br/>
                             Indegree: ${d.indegree}<br/>
                             Outdegree: ${d.outdegree}<br/>
-                            Betweenness: ${d.betweenness.toFixed(4)}<br/>
                             PageRank: ${d.pageRank.toFixed(4)}`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
