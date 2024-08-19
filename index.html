@@ -32,7 +32,10 @@
     
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
-      // Aggiungi queste definizioni di colore all'inizio del tuo script
+     // Definizioni globali
+const width = window.innerWidth;
+const height = window.innerHeight;
+
 const linkColors = {
   same_level: "#999",
   contains: "#1a9850",
@@ -41,245 +44,178 @@ const linkColors = {
 
 const nodeColors = d3.scaleOrdinal(d3.schemeCategory10);
 
-// Modifica la creazione dei collegamenti
-const link = g.append("g")
-  .selectAll("line")
-  .data(data.links)
-  .enter().append("line")
-  .attr("stroke", d => linkColors[d.type])
-  .attr("stroke-opacity", 0.6)
-  .attr("stroke-width", 2)
-  .attr("stroke-dasharray", d => d.type === "cross_level" ? "5,5" : "none");
+// Crea un elemento SVG
+const svg = d3.select("#graph-container")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height);
 
-// Modifica la creazione dei nodi
-const node = g.append("g")
-  .selectAll("circle")
-  .data(data.nodes)
-  .enter().append("circle")
-  .attr("r", 10)
-  .attr("fill", d => nodeColors(d.level))
-  .call(d3.drag()
-    .on("start", dragstarted)
-    .on("drag", dragged)
-    .on("end", dragended))
-  .on("mouseover", showTooltip)
-  .on("mouseout", hideTooltip);
+// Crea un gruppo per contenere il grafo
+const g = svg.append("g");
 
-// Modifica la forza di posizionamento verticale
-simulation.force("y", d3.forceY().strength(0.3).y(d => (d.level - 1) * height / 3));
+// Crea un div per il tooltip
+const tooltip = d3.select("body").append("div")
+  .attr("class", "tooltip")
+  .style("opacity", 0);
 
-// Aggiungi una legenda
-const legend = svg.append("g")
-  .attr("class", "legend")
-  .attr("transform", "translate(20,20)");
+// Definisci il comportamento di zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 4])
+  .on("zoom", (event) => {
+    g.attr("transform", event.transform);
+  });
 
-// Legenda per i livelli
-const levelLegend = legend.append("g").attr("transform", "translate(0,0)");
-levelLegend.selectAll("rect")
-  .data([1, 2, 3])
-  .enter().append("rect")
-  .attr("x", 0)
-  .attr("y", (d, i) => i * 25)
-  .attr("width", 20)
-  .attr("height", 20)
-  .attr("fill", d => nodeColors(d));
+// Applica lo zoom all'SVG
+svg.call(zoom);
 
-levelLegend.selectAll("text")
-  .data([1, 2, 3])
-  .enter().append("text")
-  .attr("x", 30)
-  .attr("y", (d, i) => i * 25 + 15)
-  .text(d => `Livello ${d}`);
+// Funzioni di utilità
+function calculateDegrees(nodes, links) {
+  // ... (il resto della funzione rimane invariato)
+}
 
-// Legenda per i tipi di collegamenti
-const linkLegend = legend.append("g").attr("transform", "translate(120,0)");
-linkLegend.selectAll("line")
-  .data(Object.entries(linkColors))
-  .enter().append("line")
-  .attr("x1", 0)
-  .attr("y1", (d, i) => i * 25 + 10)
-  .attr("x2", 40)
-  .attr("y2", (d, i) => i * 25 + 10)
-  .attr("stroke", d => d[1])
-  .attr("stroke-width", 2)
-  .attr("stroke-dasharray", d => d[0] === "cross_level" ? "5,5" : "none");
+function calculatePageRank(nodes, links, iterations = 10, dampingFactor = 0.85) {
+  // ... (il resto della funzione rimane invariato)
+}
 
-linkLegend.selectAll("text")
-  .data(Object.entries(linkColors))
-  .enter().append("text")
-  .attr("x", 50)
-  .attr("y", (d, i) => i * 25 + 15)
-  .text(d => d[0].replace("_", " "));
-  
-        // Dimensioni del grafo
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
 
-        // Crea un elemento SVG
-        const svg = d3.select("#graph-container")
-          .append("svg")
-          .attr("width", width)
-          .attr("height", height);
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
 
-        // Crea un gruppo per contenere il grafo
-        const g = svg.append("g");
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
 
-        // Crea un div per il tooltip
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
+function showTooltip(event, d) {
+  tooltip.transition()
+    .duration(200)
+    .style("opacity", .9);
+  tooltip.html(`
+    <strong>${d.name}</strong><br>
+    Livello: ${d.level}<br>
+    Indegree: ${d.indegree}<br>
+    Outdegree: ${d.outdegree}<br>
+    PageRank: ${d.pageRank.toFixed(4)}
+  `)
+    .style("left", (event.pageX + 10) + "px")
+    .style("top", (event.pageY - 28) + "px");
+}
 
-        // Definisci il comportamento di zoom
-        const zoom = d3.zoom()
-          .scaleExtent([0.1, 4])
-          .on("zoom", (event) => {
-            g.attr("transform", event.transform);
-          });
+function hideTooltip() {
+  tooltip.transition()
+    .duration(500)
+    .style("opacity", 0);
+}
 
-        // Applica lo zoom all'SVG
-        svg.call(zoom);
+// Carica i dati dal file JSON
+d3.json("data.json").then(data => {
+  calculateDegrees(data.nodes, data.links);
+  calculatePageRank(data.nodes, data.links);
 
-        function calculateDegrees(nodes, links) {
-          const degreeCount = {};
-          nodes.forEach(node => {
-            degreeCount[node.id] = { indegree: 0, outdegree: 0 };
-          });
+  const simulation = d3.forceSimulation(data.nodes)
+    .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
+    .force("charge", d3.forceManyBody().strength(-300))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("y", d3.forceY().strength(0.3).y(d => (d.level - 1) * height / 3));
 
-          links.forEach(link => {
-            degreeCount[link.target.id || link.target].indegree++;
-            degreeCount[link.source.id || link.source].outdegree++;
-          });
+  const link = g.append("g")
+    .selectAll("line")
+    .data(data.links)
+    .enter().append("line")
+    .attr("stroke", d => linkColors[d.type])
+    .attr("stroke-opacity", 0.6)
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", d => d.type === "cross_level" ? "5,5" : "none");
 
-          nodes.forEach(node => {
-            node.indegree = degreeCount[node.id].indegree;
-            node.outdegree = degreeCount[node.id].outdegree;
-          });
-        }
+  const node = g.append("g")
+    .selectAll("circle")
+    .data(data.nodes)
+    .enter().append("circle")
+    .attr("r", 10)
+    .attr("fill", d => nodeColors(d.level))
+    .call(d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended))
+    .on("mouseover", showTooltip)
+    .on("mouseout", hideTooltip);
 
-        function calculatePageRank(nodes, links, iterations = 10, dampingFactor = 0.85) {
-          const N = nodes.length;
-          let pageRank = {};
-          
-          nodes.forEach(node => {
-            pageRank[node.id] = 1 / N;
-          });
+  const label = g.append("g")
+    .selectAll("text")
+    .data(data.nodes)
+    .enter().append("text")
+    .text(d => d.name)
+    .attr("font-size", 12)
+    .attr("dx", 15)
+    .attr("dy", 4);
 
-          for (let i = 0; i < iterations; i++) {
-            let newPageRank = {};
-            nodes.forEach(node => {
-              newPageRank[node.id] = (1 - dampingFactor) / N;
-            });
+  simulation.on("tick", () => {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
 
-            links.forEach(link => {
-              const source = link.source.id || link.source;
-              const target = link.target.id || link.target;
-              const sourceDegree = nodes.find(n => n.id === source).outdegree;
-              newPageRank[target] += dampingFactor * pageRank[source] / sourceDegree;
-            });
+    node
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y);
 
-            pageRank = newPageRank;
-          }
+    label
+      .attr("x", d => d.x)
+      .attr("y", d => d.y);
+  });
 
-          nodes.forEach(node => {
-            node.pageRank = pageRank[node.id];
-          });
-        }
+  // Aggiungi una legenda
+  const legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", "translate(20,20)");
 
-        // Carica i dati dal file JSON
-        d3.json("data.json").then(data => {
-          calculateDegrees(data.nodes, data.links);
-          calculatePageRank(data.nodes, data.links);
+  // Legenda per i livelli
+  const levelLegend = legend.append("g").attr("transform", "translate(0,0)");
+  levelLegend.selectAll("rect")
+    .data([1, 2, 3])
+    .enter().append("rect")
+    .attr("x", 0)
+    .attr("y", (d, i) => i * 25)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", d => nodeColors(d));
 
-          const simulation = d3.forceSimulation(data.nodes)
-            .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("y", d3.forceY().strength(0.1).y(d => (d.level - 1) * height / 3));
+  levelLegend.selectAll("text")
+    .data([1, 2, 3])
+    .enter().append("text")
+    .attr("x", 30)
+    .attr("y", (d, i) => i * 25 + 15)
+    .text(d => `Livello ${d}`);
 
-          const link = g.append("g")
-            .selectAll("line")
-            .data(data.links)
-            .enter().append("line")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", 2);
+  // Legenda per i tipi di collegamenti
+  const linkLegend = legend.append("g").attr("transform", "translate(120,0)");
+  linkLegend.selectAll("line")
+    .data(Object.entries(linkColors))
+    .enter().append("line")
+    .attr("x1", 0)
+    .attr("y1", (d, i) => i * 25 + 10)
+    .attr("x2", 40)
+    .attr("y2", (d, i) => i * 25 + 10)
+    .attr("stroke", d => d[1])
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", d => d[0] === "cross_level" ? "5,5" : "none");
 
-          const node = g.append("g")
-            .selectAll("circle")
-            .data(data.nodes)
-            .enter().append("circle")
-            .attr("r", 10)
-            .attr("fill", d => d3.schemeCategory10[d.level])
-            .call(d3.drag()
-              .on("start", dragstarted)
-              .on("drag", dragged)
-              .on("end", dragended))
-            .on("mouseover", showTooltip)
-            .on("mouseout", hideTooltip);
-
-          const label = g.append("g")
-            .selectAll("text")
-            .data(data.nodes)
-            .enter().append("text")
-            .text(d => d.name)
-            .attr("font-size", 12)
-            .attr("dx", 15)
-            .attr("dy", 4);
-
-          simulation.on("tick", () => {
-            link
-              .attr("x1", d => d.source.x)
-              .attr("y1", d => d.source.y)
-              .attr("x2", d => d.target.x)
-              .attr("y2", d => d.target.y);
-
-            node
-              .attr("cx", d => d.x)
-              .attr("cy", d => d.y);
-
-            label
-              .attr("x", d => d.x)
-              .attr("y", d => d.y);
-          });
-
-          function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          }
-
-          function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-          }
-
-          function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          }
-
-          function showTooltip(event, d) {
-            tooltip.transition()
-              .duration(200)
-              .style("opacity", .9);
-            tooltip.html(`
-              <strong>${d.name}</strong><br>
-              Livello: ${d.level}<br>
-              Indegree: ${d.indegree}<br>
-              Outdegree: ${d.outdegree}<br>
-              PageRank: ${d.pageRank.toFixed(4)}
-            `)
-              .style("left", (event.pageX + 10) + "px")
-              .style("top", (event.pageY - 28) + "px");
-          }
-
-          function hideTooltip() {
-            tooltip.transition()
-              .duration(500)
-              .style("opacity", 0);
-          }
-        });
+  linkLegend.selectAll("text")
+    .data(Object.entries(linkColors))
+    .enter().append("text")
+    .attr("x", 50)
+    .attr("y", (d, i) => i * 25 + 15)
+    .text(d => d[0].replace("_", " "));
+});
     </script>
 </body>
 </html>
