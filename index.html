@@ -17,19 +17,37 @@
     </style>
 </head>
 <body>
-    <div id="graph-container"></div>
+  <div id="graph-container">
+    <svg width="800" height="600">
+        <g id="graph"></g>
+    </svg>
+</div>
+
     
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
-       // Dimensioni del grafo
+ // Dimensioni del grafo
 const width = 800;
 const height = 600;
 
 // Crea un elemento SVG
 const svg = d3.select("#graph-container")
-  .append("svg")
+  .select("svg")
   .attr("width", width)
   .attr("height", height);
+
+// Crea un gruppo per contenere il grafo
+const g = svg.select("#graph");
+
+// Definisci il comportamento di zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 4])
+  .on("zoom", (event) => {
+    g.attr("transform", event.transform);
+  });
+
+// Applica lo zoom all'SVG
+svg.call(zoom);
 
 // Carica i dati dal file JSON
 d3.json("data.json").then(data => {
@@ -41,7 +59,7 @@ d3.json("data.json").then(data => {
     .force("y", d3.forceY().strength(0.1).y(d => (d.level - 1) * height / 3));
 
   // Crea i link
-  const link = svg.append("g")
+  const link = g.append("g")
     .selectAll("line")
     .data(data.links)
     .enter().append("line")
@@ -49,15 +67,19 @@ d3.json("data.json").then(data => {
     .attr("stroke-opacity", 0.6);
 
   // Crea i nodi
-  const node = svg.append("g")
+  const node = g.append("g")
     .selectAll("circle")
     .data(data.nodes)
     .enter().append("circle")
     .attr("r", 5)
-    .attr("fill", d => d3.schemeCategory10[d.level]);
+    .attr("fill", d => d3.schemeCategory10[d.level])
+    .call(d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended));
 
   // Aggiungi etichette ai nodi
-  const label = svg.append("g")
+  const label = g.append("g")
     .selectAll("text")
     .data(data.nodes)
     .enter().append("text")
@@ -82,6 +104,24 @@ d3.json("data.json").then(data => {
       .attr("x", d => d.x)
       .attr("y", d => d.y);
   });
+
+  // Funzioni per il drag dei nodi
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
 });
     </script>
 </body>
